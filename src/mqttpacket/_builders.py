@@ -74,7 +74,7 @@ def connect(client_id, keepalive=60, connect_spec=None):
         remaining_length,
         0x0004,
         PROTOCOL_NAME,
-        0x04,
+        _packet.PROTOCOL_LEVEL,
         0x02,
         keepalive,
         len(client_id)
