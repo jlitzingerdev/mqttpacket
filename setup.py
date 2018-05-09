@@ -31,6 +31,7 @@ setup(
     ],
     install_requires=[
         'attrs',
+        'six',
     ],
     package_dir={"": "src"},
     packages=find_packages("src"),
