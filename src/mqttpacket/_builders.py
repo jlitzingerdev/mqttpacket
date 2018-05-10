@@ -150,3 +150,14 @@ def connect(client_id, keepalive=60, connect_spec=None):
 
     msg = b''.join(parts)
     return msg
+
+
+def pingreq():
+    """
+    Create a PINGREQ packet.
+    """
+    return struct.pack(
+        '!BB',
+        (_packet.MQTT_PACKET_PINGREQ << 4),
+        0
+    )

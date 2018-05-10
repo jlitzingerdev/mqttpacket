@@ -5,6 +5,7 @@ See LICENSE for details
 from ._builders import (
     connect,
     ConnectSpec,
+    pingreq,
 )
 
 from ._parsing import (
@@ -38,6 +39,7 @@ from ._errors import (
 __all__ = [
     'connect',
     'ConnectSpec',
+    'pingreq',
     'MQTTPacket',
     'parse',
     'parse_connack',
