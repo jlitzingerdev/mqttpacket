@@ -51,6 +51,15 @@ def parse_connack(data, output):
     return 4
 
 
+def parse_pingresp(data, _):
+    """
+    Parse a PINGRESP, consume and discard.
+    """
+    if len(data) >= 2:
+        return 2
+    return 0
+
+
 def _null_parse(data, output):
     return len(data)
 
@@ -68,7 +77,7 @@ PARSERS = {
     _packet.MQTT_PACKET_UNSUBSCRIBE: _null_parse,
     _packet.MQTT_PACKET_UNSUBACK: _null_parse,
     _packet.MQTT_PACKET_PINGREQ: _null_parse,
-    _packet.MQTT_PACKET_PINGRESP: _null_parse,
+    _packet.MQTT_PACKET_PINGRESP: parse_pingresp,
     _packet.MQTT_PACKET_DISCONNECT: _null_parse,
 }
 
