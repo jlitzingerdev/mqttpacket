@@ -77,6 +77,13 @@ class ConnectSpec(object):
 
         if self.will_topic:
             flags |= 0x04
+            flags |= (self.will_qos << 3)
+
+        if self.username:
+            flags |= 0x80
+
+        if self.password:
+            flags |= 0x40
 
         return flags
 
