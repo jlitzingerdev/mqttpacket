@@ -100,12 +100,15 @@ def parse(data, output):
     consumed = 0
     offset = 0
     while offset < len(data):
-        pkt_type = data[offset]
+        pkt_type = data[offset] >> 4
         if (pkt_type <= _packet.MQTT_PACKET_INVALID or
                 pkt_type >= _packet.MQTT_PACKET_MAX):
             offset += 1
             continue
-        consumed += PARSERS[pkt_type](data[consumed:], output)
-        offset += consumed
+        consumed += PARSERS[pkt_type](data[offset:], output)
+        if consumed > 0:
+            offset += consumed
+        else:
+            offset += 1
 
     return consumed
