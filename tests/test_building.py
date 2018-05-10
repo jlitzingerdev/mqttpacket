@@ -33,13 +33,33 @@ def test_will_requirements():
             will_message=u'my message',
         )
 
+
+def test_valid_will():
+    """
+    A valid will topic/message spec sets flags and payload.
+    """
     cs = mqttpacket.ConnectSpec(
         will_topic=u'my_will_topic',
-        will_message=u'my_will_message'
+        will_message=u'my_will_message',
+        will_qos=1,
     )
 
-    assert cs.will_topic == u'my_will_topic'
-    assert cs.will_message == u'my_will_message'
+    wt = u'my_will_topic'
+    wm = u'my_will_message'
+    assert cs.will_topic == wt
+    assert cs.will_message == wm
+    assert cs.flags() == 0x0e
+    assert cs.remaining_length() == (4 + len(wt) + len(wm))
+
+    cs = mqttpacket.ConnectSpec(
+        will_topic=u'wt2',
+        will_message=u'wm2',
+        will_qos=2,
+    )
+
+    assert cs.will_topic == u'wt2'
+    assert cs.will_message == u'wm2'
+    assert cs.flags() == 0x16
 
 
 def test_default_spec():
