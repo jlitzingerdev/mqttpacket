@@ -29,7 +29,7 @@ def parse_connack(data, output):
 
     """
     if len(data) != 4:
-        raise _errors.MQTTParseError("Not enough data")
+        return 0
 
     remaining_len = data[1]
     if remaining_len != 2:
