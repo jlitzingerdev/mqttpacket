@@ -6,6 +6,8 @@ from ._builders import (
     connect,
     ConnectSpec,
     pingreq,
+    SubscriptionSpec,
+    subscribe,
 )
 
 from ._parsing import (
@@ -40,6 +42,8 @@ __all__ = [
     'connect',
     'ConnectSpec',
     'pingreq',
+    'SubscriptionSpec',
+    'subscribe',
     'MQTTPacket',
     'parse',
     'parse_connack',

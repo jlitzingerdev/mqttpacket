@@ -110,3 +110,26 @@ def test_will_qos_values():
         will_message=u'my_will_message',
         will_qos=2
     )
+
+
+def test_build_subscription_multiple():
+    """
+    Multiple topic filters can be properly encoded.
+
+    This example is from the MQTT specification.
+    """
+    specs = [
+        mqttpacket.SubscriptionSpec(u'a/b', 0x01),
+        mqttpacket.SubscriptionSpec(u'c/d', 0x02),
+    ]
+    packet = mqttpacket.subscribe(10, specs)
+    assert isinstance(packet, bytes)
+    assert packet[0] == (mqttpacket.MQTT_PACKET_SUBSCRIBE << 4)
+    assert packet[1] == 14
+    assert int(packet[2] << 8 | packet[3]) == 10
+    assert int(packet[4] << 8 | packet[5]) == 3
+    assert packet[6:9].decode('utf-8') == u'a/b'
+    assert packet[9] == 0x01
+    assert int(packet[10] << 8 | packet[11]) == 3
+    assert packet[12:15].decode('utf-8') == u'c/d'
+    assert packet[15] == 0x02

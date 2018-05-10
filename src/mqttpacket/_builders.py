@@ -161,3 +161,69 @@ def pingreq():
         (_packet.MQTT_PACKET_PINGREQ << 4),
         0
     )
+
+
+def _validate_qos(_instance, _attribute, value):
+    if not 0 <= value < 3:
+        raise ValueError('qos must be 0 <= qos < 3')
+
+
+@attr.s(slots=True)
+class SubscriptionSpec(object):
+    """
+    A data class for a topicfilter qos pair.
+    """
+    topicfilter = attr.ib(
+        validator=attr.validators.instance_of(six.text_type),
+    )
+
+    qos = attr.ib(
+        validator=_validate_qos,
+    )
+
+    def remaining_len(self):
+        """
+        Length for this spec.
+        """
+        return 3 + len(self.topicfilter)
+
+    def to_bytes(self):
+        """Encode this spec as bytes"""
+        return b''.join([
+            struct.pack('!H', len(self.topicfilter)),
+            self.topicfilter.encode('utf-8'),
+            struct.pack('!B', self.qos)
+        ])
+
+
+def subscribe(packetid, topicspecs):
+    """Create a subscribe packet.
+
+    :param topicfilter: The list of topicfilter specs.
+
+    :param qos: The QoS level to use.
+
+    """
+    if not 0 < packetid < 65535:
+        raise ValueError('Packetid must be 0 < packetid < 65535')
+
+    remaining_len = 2
+    for spec in topicspecs:
+        remaining_len += spec.remaining_len()
+
+    # TODO: Remaining len can be multibyte
+    msg = struct.pack(
+        '!BBH',
+        (_packet.MQTT_PACKET_SUBSCRIBE << 4),
+        remaining_len,
+        packetid
+    )
+
+    encoded_specs = [msg]
+    encoded_specs.extend(
+        [s.to_bytes() for s in topicspecs]
+    )
+
+    msg = b''.join(encoded_specs)
+
+    return msg
