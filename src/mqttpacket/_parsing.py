@@ -29,7 +29,7 @@ def parse_connack(data, output):
 
     """
     if len(data) != 4:
-        return 0
+        raise _errors.MQTTMoreDataNeededError("CONNACK needs more data")
 
     remaining_len = data[1]
     if remaining_len != 2:
@@ -101,14 +101,13 @@ def parse(data, output):
     offset = 0
     while offset < len(data):
         pkt_type = data[offset] >> 4
-        if (pkt_type <= _packet.MQTT_PACKET_INVALID or
-                pkt_type >= _packet.MQTT_PACKET_MAX):
+        try:
+            consumed += PARSERS[pkt_type](data[offset:], output)
+        except KeyError:
             offset += 1
-            continue
-        consumed += PARSERS[pkt_type](data[offset:], output)
-        if consumed > 0:
-            offset += consumed
+        except _errors.MQTTMoreDataNeededError:
+            return consumed
         else:
-            offset += 1
+            offset += consumed
 
     return consumed
