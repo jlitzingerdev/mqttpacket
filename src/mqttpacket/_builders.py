@@ -214,7 +214,7 @@ def subscribe(packetid, topicspecs):
     # TODO: Remaining len can be multibyte
     msg = struct.pack(
         '!BBH',
-        (_packet.MQTT_PACKET_SUBSCRIBE << 4),
+        (_packet.MQTT_PACKET_SUBSCRIBE << 4) | 0x02,
         remaining_len,
         packetid
     )
