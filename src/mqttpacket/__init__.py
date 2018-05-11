@@ -35,6 +35,7 @@ from ._packet import (
 
 from ._errors import (
     MQTTParseError,
+    MQTTMoreDataNeededError,
 )
 
 
@@ -48,6 +49,7 @@ __all__ = [
     'parse',
     'parse_connack',
     'MQTTParseError',
+    'MQTTMoreDataNeededError',
     'MQTT_PACKET_CONNECT',
     'MQTT_PACKET_CONNACK',
     'MQTT_PACKET_PUBLISH',

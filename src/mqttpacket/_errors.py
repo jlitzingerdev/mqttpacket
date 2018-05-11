@@ -5,3 +5,7 @@ See LICENSE for details.
 
 class MQTTParseError(Exception):
     """Parse error"""
+
+
+class MQTTMoreDataNeededError(Exception):
+    """Parse Error when more data is needed."""
