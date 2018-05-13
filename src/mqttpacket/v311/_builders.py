@@ -124,6 +124,7 @@ def connect(client_id, keepalive=60, connect_spec=None):
 
     """
     client_id = client_id.encode('utf-8')
+    # TODO: Remaining len can be multibyte
     remaining_length = _CONNECT_REMAINING_LENGTH
 
     if client_id:

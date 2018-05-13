@@ -4,7 +4,7 @@ See LICENSE for details.
 """
 import pytest
 
-import mqttpacket
+import mqttpacket.v311 as mqttpacket
 
 
 def test_connect_basic():
