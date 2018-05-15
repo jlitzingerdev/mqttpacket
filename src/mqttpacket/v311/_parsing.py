@@ -1,6 +1,11 @@
 """
 Copyright 2018 Jason Litzinger
 See LICENSE for details.
+
+
+Parsers should return the total length consumed, which should
+include all headers (Fixed, variable, and payload).
+
 """
 from __future__ import absolute_import
 
