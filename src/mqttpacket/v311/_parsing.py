@@ -20,49 +20,45 @@ class ConnectResponse:
     return_code = attr.ib()
     session_present = attr.ib()
 
-def parse_remaining_len(data):
-    """Parse remaining length field from data"""
-    #TODO can be variable
-    return data[1], 1
-
-
-def parse_connack(data, output):
+def parse_connack(data, remaining_length, variable_begin, output):
     """Parse a CONNACK packet.
 
     :param data: Data to parse
     :type data: bytebuffer
 
+    :param variable_begin: Offset of start of variable length header
+
     :raises: MQTTParseError if packet is malformed
     :returns: length consumed, return code and session_present flag from the
         CONNACK packet.
 
-    :rtype: int, ConnectResponse
+    :rtype: int
 
     """
     if len(data) != 4:
         raise _errors.MQTTMoreDataNeededError("CONNACK needs more data")
 
-    remaining_len = data[1]
-    if remaining_len != 2:
+    if remaining_length != 2:
         raise _errors.MQTTParseError("Remaining length invalid")
 
-    ack_flags = data[2]
-    rc = data[3]
+    ack_flags = data[variable_begin]
+    rc = data[variable_begin+1]
 
     if (ack_flags & 0xFE) != 0:
         raise _errors.MQTTParseError("Reserved bits not clear")
 
     output.append(
-        _packet.MQTTPacket(
+        _packet.ConnectResponse(
             _packet.MQTT_PACKET_CONNACK,
-            ConnectResponse(rc, ack_flags)
+            rc,
+            ack_flags
         )
     )
 
     return 4
 
 
-def parse_pingresp(data, _):
+def parse_pingresp(data, _remaining_length, _offset, _output):
     """
     Parse a PINGRESP, consume and discard.
     """
@@ -79,32 +75,32 @@ class SubackResponse(object):
     packet_id = attr.ib()
     return_codes = attr.ib()
 
-def parse_suback(data, output):
+
+def parse_suback(data, remaining_length, variable_begin, output):
     """
     Parse a SUBACK packet.
 
     :param data: The data to parse.
+    :param remaining_length: Remaining length field parsed
+        from the packet.
+
+    :param variable_begin: Offset of start of variable length header
 
     :param output: List of output packets.
 
     """
 
-    remaining_len, consumed = parse_remaining_len(data)
-    offset = 1 + consumed
-    total_size = remaining_len + offset
-
+    total_size = remaining_length + variable_begin
     if len(data) != total_size:
         raise _errors.MQTTMoreDataNeededError("CONNACK needs more data")
 
-    packet_id = (data[offset] << 8) | data[offset+1]
-    offset += 2
+    packet_id = (data[variable_begin] << 8) | data[variable_begin+1]
+    variable_begin += 2
     output.append(
-        _packet.MQTTPacket(
+        _packet.SubackResponse(
             _packet.MQTT_PACKET_SUBACK,
-            SubackResponse(
-                packet_id,
-                [rc for rc in data[offset:total_size]]
-            )
+            packet_id,
+            [rc for rc in data[variable_begin:total_size]]
         )
     )
     return total_size
@@ -121,13 +117,16 @@ class PublishPacket(object):
 
 
 def parse_publish(data, output):
+def parse_publish(data, remaining_length, variable_begin, output):
     """Parse a PUBLISH packet.
 
     :param data: Incoming data to parse.
     :type data: bytearray
 
+    :param variable_begin: Offset of start of variable length header
+
     :param output: List of result messages
-    :type output: [mqttpacket.v311.MQTTPacket]
+    :type output: [mqttpacket.v311.PublishPacket]
 
     :returns: number of bytes consumed.
 
@@ -135,35 +134,34 @@ def parse_publish(data, output):
     flags = data[0] & 0x0F
     qos = (flags & 0x06) >> 1
 
-    remaining_len, consumed = parse_remaining_len(data)
-    offset = 1 + consumed
-    total_len = remaining_len + offset
+    total_len = remaining_length + variable_begin
 
-    print(total_len)
     if len(data) != total_len:
         raise _errors.MQTTMoreDataNeededError("PUBLISH needs more data")
 
-    topic_len = (data[offset] << 8) | data[offset+1]
-    offset += 2
-    topic = data[offset:offset+topic_len].decode('utf-8')
+    topic_len = (data[variable_begin] << 8) | data[variable_begin+1]
+    variable_begin += 2
+    topic = data[variable_begin:variable_begin+topic_len].decode('utf-8')
     # Check for wildcard chars
-    offset += topic_len
+    variable_begin += topic_len
     packetid = None
     if qos:
-        packetid = (data[offset] << 8) | data[offset+1]
-        offset += 2
+        packetid = (data[variable_begin] << 8) | data[variable_begin+1]
+        variable_begin += 2
 
-    pp = PublishPacket(topic, packetid, data[offset:])
     output.append(
-        _packet.MQTTPacket(
+        _packet.PublishPacket(
             _packet.MQTT_PACKET_PUBLISH,
-            pp
+            topic,
+            packetid,
+            data[variable_begin:]
         )
     )
-    return remaining_len + 2
+
+    return total_len
 
 
-def _null_parse(data, output):
+def _null_parse(data, _remaining_length, _offset, _output):
     return len(data)
 
 
@@ -185,6 +183,9 @@ PARSERS = {
 }
 
 
+_MAX_MULTIPLIER = 128 * 128 * 128
+
+
 def parse(data, output):
     """Parse packets from data.
 
@@ -202,10 +203,29 @@ def parse(data, output):
 
     consumed = 0
     offset = 0
+
     while offset < len(data):
         pkt_type = data[offset] >> 4
+        variable_begin = offset + 1
+
+        remaining_length = 0
+        mult = 1
+        parsing_len = True
+        while parsing_len:
+            remaining_length += (data[variable_begin] & 127) * mult
+            variable_begin += 1
+            mult *= 128
+            if mult > _MAX_MULTIPLIER:
+                raise _errors.MQTTParseError("Invalid remaining length")
+            parsing_len = (data[variable_begin] & 128) != 0
+
         try:
-            consumed += PARSERS[pkt_type](data[offset:], output)
+            consumed += PARSERS[pkt_type](
+                data[offset:],
+                remaining_length,
+                variable_begin,
+                output
+            )
         except KeyError:
             offset += 1
         except _errors.MQTTMoreDataNeededError:
