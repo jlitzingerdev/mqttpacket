@@ -9,10 +9,7 @@ include all headers (Fixed, variable, and payload).
 """
 from __future__ import absolute_import
 
-import attr
-
 from . import _packet, _errors
-
 
 def parse_connack(data, remaining_length, variable_begin, output):
     """Parse a CONNACK packet.
@@ -160,7 +157,7 @@ PARSERS = {
 
 
 _MAX_MULTIPLIER = 128 * 128 * 128
-
+_MULTIPLIERS = (1, 128, 128, 128)
 
 def parse(data, output):
     """Parse packets from data.
@@ -183,17 +180,19 @@ def parse(data, output):
     while offset < len(data):
         pkt_type = data[offset] >> 4
         variable_begin = offset + 1
-
         remaining_length = 0
-        mult = 1
         parsing_len = True
+        nb = 0
         while parsing_len:
-            remaining_length += (data[variable_begin] & 127) * mult
+            remaining_length += (data[variable_begin] & 127) * _MULTIPLIERS[nb]
+            nb += 1
+            parsing_len = (variable_begin < len(data)
+                           and (nb < 4)
+                           and ((data[variable_begin] & 128) != 0))
             variable_begin += 1
-            mult *= 128
-            if mult > _MAX_MULTIPLIER:
-                raise _errors.MQTTParseError("Invalid remaining length")
-            parsing_len = (data[variable_begin] & 128) != 0
+
+        if nb == 4:
+            raise _errors.MQTTParseError("Invalid remaining length")
 
         try:
             consumed += PARSERS[pkt_type](

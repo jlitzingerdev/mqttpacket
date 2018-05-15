@@ -4,6 +4,7 @@ See LICENSE for details.
 """
 import binascii
 import json
+import pytest
 
 from mqttpacket.v311 import _parsing, _packet
 
@@ -74,3 +75,64 @@ def test_parse_connack():
     assert msgs[0].return_code == 0
     assert msgs[0].session_present == 0
     assert msgs[0].pkt_type == _packet.MQTT_PACKET_CONNACK
+
+
+@pytest.fixture(scope='function')
+def capture_len():
+    rem_len = []
+
+    def _capture(data, remaining_length, _offset, _output):
+        rem_len.append(remaining_length)
+        return len(data)
+
+    old = _parsing.PARSERS[_packet.MQTT_PACKET_PUBLISH]
+    _parsing.PARSERS[_packet.MQTT_PACKET_PUBLISH] = _capture
+    yield rem_len
+    _parsing.PARSERS[_packet.MQTT_PACKET_PUBLISH] = old
+
+
+def test_parse_single_byte_remaining_length(capture_len):
+    """
+    A single byte remaining length is properly parsed.
+    """
+    print(capture_len)
+    data = bytearray()
+    data.extend(
+        binascii.unhexlify(b'31150004746573747b2274657374223a2274657374227d')
+    )
+    msgs = []
+    _parsing.parse(data, msgs)
+    assert capture_len[0] == 0x15
+
+
+def test_parse_only_fixed_header(capture_len):
+    """
+    A single byte remaining length is properly parsed even it 
+    """
+    data = bytearray()
+    data.extend(
+        binascii.unhexlify(b'3000')
+    )
+    msgs = []
+    _parsing.parse(data, msgs)
+    assert capture_len[0] == 0
+
+def test_parse_two_byte(capture_len):
+    """
+    A two byte encoded remaining length is properly parsed.
+    """
+    data = bytearray()
+    data.extend(
+        binascii.unhexlify(b'30ff7f1a')
+    )
+    msgs = []
+    _parsing.parse(data, msgs)
+    assert capture_len[0] == 16383
+
+    data = bytearray()
+    data.extend(
+        binascii.unhexlify(b'30ff011a')
+    )
+    msgs = []
+    _parsing.parse(data, msgs)
+    assert capture_len[0] == 128
