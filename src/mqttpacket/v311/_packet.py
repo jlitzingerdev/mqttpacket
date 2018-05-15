@@ -25,17 +25,30 @@ MQTT_PACKET_MAX = MQTT_PACKET_DISCONNECT + 1
 PROTOCOL_LEVEL = 4 # MQTT 3.1.1
 
 
-@attr.s(slots=True)
-class MQTTPacket(object):
+@attr.s
+class ConnectResponse:
+    """Object representing a connection response"""
+    pkt_type = attr.ib()
+    return_code = attr.ib()
+    session_present = attr.ib()
+
+
+@attr.s
+class SubackResponse(object):
     """
-    A packet received from the MQTT broker.  It has
-    a type and an opaque payload that is specific to
-    the packet type.
-
-    :ivar pkt_type: The type of the packet
-
-    :ivar payload: An opaque payload specific to the packet type.
-
+    Payload for SUBACK packets.
     """
     pkt_type = attr.ib()
+    packet_id = attr.ib()
+    return_codes = attr.ib()
+
+
+@attr.s(slots=True)
+class PublishPacket(object):
+    """
+    Packet representing an incoming publish message.
+    """
+    pkt_type = attr.ib()
+    topic = attr.ib()
+    packetid = attr.ib()
     payload = attr.ib()

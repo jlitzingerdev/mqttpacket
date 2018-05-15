@@ -16,7 +16,9 @@ from ._parsing import (
 )
 
 from ._packet import (
-    MQTTPacket,
+    ConnectResponse,
+    SubackResponse,
+    PublishPacket,
     MQTT_PACKET_CONNECT,
     MQTT_PACKET_CONNACK,
     MQTT_PACKET_PUBLISH,
@@ -45,7 +47,9 @@ __all__ = [
     'pingreq',
     'SubscriptionSpec',
     'subscribe',
-    'MQTTPacket',
+    'ConnectResponse',
+    'SubackResponse',
+    'PublishPacket',
     'parse',
     'parse_connack',
     'MQTTParseError',

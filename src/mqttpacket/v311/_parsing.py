@@ -14,12 +14,6 @@ import attr
 from . import _packet, _errors
 
 
-@attr.s
-class ConnectResponse:
-    """Object representing a connection response"""
-    return_code = attr.ib()
-    session_present = attr.ib()
-
 def parse_connack(data, remaining_length, variable_begin, output):
     """Parse a CONNACK packet.
 
@@ -67,13 +61,6 @@ def parse_pingresp(data, _remaining_length, _offset, _output):
     return 0
 
 
-@attr.s
-class SubackResponse(object):
-    """
-    Payload for SUBACK packets.
-    """
-    packet_id = attr.ib()
-    return_codes = attr.ib()
 
 
 def parse_suback(data, remaining_length, variable_begin, output):
@@ -106,17 +93,6 @@ def parse_suback(data, remaining_length, variable_begin, output):
     return total_size
 
 
-@attr.s(slots=True)
-class PublishPacket(object):
-    """
-    Packet representing an incoming publish message.
-    """
-    topic = attr.ib()
-    packetid = attr.ib()
-    payload = attr.ib()
-
-
-def parse_publish(data, output):
 def parse_publish(data, remaining_length, variable_begin, output):
     """Parse a PUBLISH packet.
 
