@@ -7,6 +7,7 @@ import json
 import pytest
 
 from mqttpacket.v311 import _parsing, _packet
+from mqttpacket.v311 import MQTTParseError
 
 def test_parse_publish_simple():
     """
@@ -131,8 +132,45 @@ def test_parse_two_byte(capture_len):
 
     data = bytearray()
     data.extend(
-        binascii.unhexlify(b'30ff011a')
+        binascii.unhexlify(b'3080011a')
     )
     msgs = []
     _parsing.parse(data, msgs)
-    assert capture_len[0] == 128
+    assert capture_len[1] == 128
+
+def test_parse_three_byte(capture_len):
+    """
+    A three byte encoded remaining length is properly parsed.
+    """
+    data = bytearray()
+    data.extend(
+        binascii.unhexlify(b'30ffff7f1a')
+    )
+    msgs = []
+    _parsing.parse(data, msgs)
+    assert capture_len[0] == 2097151
+
+def test_parse_four_byte(capture_len):
+    """
+    A four byte encoded remaining length is properly parsed.
+    """
+    data = bytearray()
+    data.extend(
+        binascii.unhexlify(b'30ffffff7f1a')
+    )
+    msgs = []
+    _parsing.parse(data, msgs)
+    assert capture_len[0] == 268435455
+
+
+def test_parse_five_byte(capture_len):
+    """
+    A five byte encoded remaining length is considered an error.
+    """
+    data = bytearray()
+    data.extend(
+        binascii.unhexlify(b'30ffffffff7f')
+    )
+    msgs = []
+    with pytest.raises(MQTTParseError):
+        _parsing.parse(data, msgs)

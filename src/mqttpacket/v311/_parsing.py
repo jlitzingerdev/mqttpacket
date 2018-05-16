@@ -156,8 +156,8 @@ PARSERS = {
 }
 
 
-_MAX_MULTIPLIER = 128 * 128 * 128
-_MULTIPLIERS = (1, 128, 128, 128)
+_MULTIPLIERS = (1, 128, 128 * 128, 128 * 128 * 128, 0)
+_MAX_REMAINING_LENGTH = 268435455
 
 def parse(data, output):
     """Parse packets from data.
@@ -186,12 +186,14 @@ def parse(data, output):
         while parsing_len:
             remaining_length += (data[variable_begin] & 127) * _MULTIPLIERS[nb]
             nb += 1
-            parsing_len = (variable_begin < len(data)
-                           and (nb < 4)
-                           and ((data[variable_begin] & 128) != 0))
+            parsing_len = (
+                variable_begin < len(data)
+                and (nb < 5)
+                and ((data[variable_begin] & 128) != 0)
+            )
             variable_begin += 1
 
-        if nb == 4:
+        if nb == 5:
             raise _errors.MQTTParseError("Invalid remaining length")
 
         try:
