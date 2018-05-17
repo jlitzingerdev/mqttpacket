@@ -27,6 +27,32 @@ def test_parse_publish_simple():
     assert msgs[0].packetid is None
     assert msgs[0].topic == u'test'
     assert msgs[0].pkt_type == _packet.MQTT_PACKET_PUBLISH
+    assert msgs[0].qos == 0
+    assert not msgs[0].dup
+    assert msgs[0].retain
+
+
+def test_parse_publish_qos():
+    """
+    A publish with QoS of 1 is successfully parsed.
+    """
+    data = bytearray()
+    data.extend(
+        binascii.unhexlify(b'321700047465737400037b2274657374223a2274657374227d')
+    )
+    msgs = []
+    c = _parsing.parse(data, msgs)
+    assert len(data) == c
+    assert len(msgs) == 1
+    payload = msgs[0].payload.decode('utf-8')
+    res = json.loads(payload)
+    assert res == {"test": "test"}
+    assert msgs[0].packetid == 3
+    assert msgs[0].topic == u'test'
+    assert msgs[0].pkt_type == _packet.MQTT_PACKET_PUBLISH
+    assert msgs[0].qos == 1
+    assert not msgs[0].dup
+    assert not msgs[0].retain
 
 
 def test_parse_publish_in_pieces():
