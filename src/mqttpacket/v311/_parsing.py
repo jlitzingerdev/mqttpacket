@@ -6,6 +6,7 @@ A parser should either consume all packet data, or raise and error.
 
 """
 from __future__ import absolute_import
+import typing
 
 from . import _packet, _errors
 
@@ -140,6 +141,7 @@ _MULTIPLIERS = (1, 128, 128 * 128, 128 * 128 * 128, 0)
 _MAX_REMAINING_LENGTH = 268435455
 
 def check_total_len(data, offset, remaining_length, variable_begin):
+    # type: (typing.ByteString, int, int, int) -> bool
     """Verify enough data is available"""
     size_rem_len = variable_begin - offset - 1
     return (len(data) - offset) == (remaining_length + 1 + size_rem_len)

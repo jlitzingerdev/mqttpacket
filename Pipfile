@@ -9,8 +9,10 @@ name = "pypi"
 
 attrs = "*"
 six = "*"
+typing = "*"
 
 
 [dev-packages]
 
 pytest = "*"
+mypy = "*"

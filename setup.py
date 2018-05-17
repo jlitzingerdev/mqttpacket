@@ -32,6 +32,7 @@ setup(
     install_requires=[
         'attrs',
         'six',
+        'typing',
     ],
     package_dir={"": "src"},
     packages=find_packages("src"),
