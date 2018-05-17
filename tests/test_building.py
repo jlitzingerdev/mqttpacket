@@ -2,6 +2,7 @@
 Copyright 2018 Jason Litzinger
 See LICENSE for details.
 """
+import six
 import pytest
 
 import mqttpacket.v311 as mqttpacket
@@ -14,8 +15,8 @@ def test_connect_basic():
     packet = mqttpacket.connect(u'Foobar')
     assert isinstance(packet, bytes)
     assert len(packet) == 20
-    assert packet[0] == 16
-    assert packet[9] == 0x02
+    assert six.indexbytes(packet, 0) == 16
+    assert six.indexbytes(packet, 9) == 0x02
     assert packet[14:].decode('utf-8') == u'Foobar'
 
 
@@ -124,15 +125,15 @@ def test_build_subscription_multiple():
     ]
     packet = mqttpacket.subscribe(10, specs)
     assert isinstance(packet, bytes)
-    assert packet[0] == 0x82
-    assert packet[1] == 14
-    assert int(packet[2] << 8 | packet[3]) == 10
-    assert int(packet[4] << 8 | packet[5]) == 3
+    assert six.indexbytes(packet, 0) == 0x82
+    assert six.indexbytes(packet, 1) == 14
+    assert six.indexbytes(packet, 2) << 8 | six.indexbytes(packet, 3) == 10
+    assert six.indexbytes(packet, 4) << 8 | six.indexbytes(packet, 5) == 3
     assert packet[6:9].decode('utf-8') == u'a/b'
-    assert packet[9] == 0x01
-    assert int(packet[10] << 8 | packet[11]) == 3
+    assert six.indexbytes(packet, 9) == 0x01
+    assert six.indexbytes(packet, 10) << 8 | six.indexbytes(packet, 11) == 3
     assert packet[12:15].decode('utf-8') == u'c/d'
-    assert packet[15] == 0x02
+    assert six.indexbytes(packet, 15) == 0x02
 
 
 def test_build_subscription_single():
@@ -146,9 +147,9 @@ def test_build_subscription_single():
     ]
     packet = mqttpacket.subscribe(10, specs)
     assert isinstance(packet, bytes)
-    assert packet[0] == 0x82
-    assert packet[1] == 11
-    assert int(packet[2] << 8 | packet[3]) == 10
-    assert int(packet[4] << 8 | packet[5]) == 6
+    assert six.indexbytes(packet, 0) == 0x82
+    assert six.indexbytes(packet, 1) == 11
+    assert six.indexbytes(packet, 2) << 8 | six.indexbytes(packet, 3) == 10
+    assert six.indexbytes(packet, 4) << 8 | six.indexbytes(packet, 5) == 6
     assert packet[6:12].decode('utf-8') == u'test/1'
-    assert packet[12] == 0x00
+    assert six.indexbytes(packet, 12) == 0x00
