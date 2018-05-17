@@ -16,3 +16,4 @@ typing = "*"
 
 pytest = "*"
 mypy = "*"
+pytest-cov = "*"
