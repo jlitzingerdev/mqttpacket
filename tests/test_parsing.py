@@ -80,23 +80,31 @@ def test_parse_connack():
 
 @pytest.fixture(scope='function')
 def capture_len():
+    """
+    Fixture to replace a parser with one that captures the calculated
+    remaining length.
+    """
     rem_len = []
 
-    def _capture(data, remaining_length, _offset, _output):
+    def _capture(data, remaining_length, _variable_begin, _output):
         rem_len.append(remaining_length)
         return len(data)
 
     old = _parsing.PARSERS[_packet.MQTT_PACKET_PUBLISH]
+    old_check = _parsing.check_total_len
     _parsing.PARSERS[_packet.MQTT_PACKET_PUBLISH] = _capture
+    def _fake_check(_w, _x, _y, _z):
+        return True
+    _parsing.check_total_len = _fake_check
     yield rem_len
     _parsing.PARSERS[_packet.MQTT_PACKET_PUBLISH] = old
+    _parsing.check_total_len = old_check
 
 
 def test_parse_single_byte_remaining_length(capture_len):
     """
     A single byte remaining length is properly parsed.
     """
-    print(capture_len)
     data = bytearray()
     data.extend(
         binascii.unhexlify(b'31150004746573747b2274657374223a2274657374227d')
