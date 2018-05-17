@@ -26,7 +26,7 @@ PROTOCOL_LEVEL = 4 # MQTT 3.1.1
 
 
 @attr.s
-class ConnectResponse:
+class ConnectResponse(object):
     """Object representing a connection response"""
     pkt_type = attr.ib()
     return_code = attr.ib()
