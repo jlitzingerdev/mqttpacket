@@ -66,7 +66,7 @@ class ConnectSpec(object):
     will_qos = attr.ib(
         default=0x00,
         validator=[
-            attr.validators.in_((0x00, 0x01, 0x02)),
+            attr.validators.in_(_packet.VALID_QOS),
             _check_will_qos,
         ]
     )

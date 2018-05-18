@@ -25,6 +25,9 @@ MQTT_PACKET_MAX = MQTT_PACKET_DISCONNECT + 1
 PROTOCOL_LEVEL = 4 # MQTT 3.1.1
 
 
+VALID_QOS = (0x00, 0x01, 0x02)
+
+
 @attr.s
 class ConnackPacket(object):
     """Parsed CONNACK packet
