@@ -153,3 +153,43 @@ def test_build_subscription_single():
     assert six.indexbytes(packet, 4) << 8 | six.indexbytes(packet, 5) == 6
     assert packet[6:12].decode('utf-8') == u'test/1'
     assert six.indexbytes(packet, 12) == 0x00
+
+
+def test_encode_single_byte_length():
+    """
+    A length < 128 is encoded in a single byte.
+    """
+    r = mqttpacket.encode_remainining_length(127)
+    assert r == b'\x7f'
+    r = mqttpacket.encode_remainining_length(0)
+    assert r == b'\x00'
+
+
+def test_encode_two_byte_length():
+    """
+    A length over 127 is encoded with two bytes.
+    """
+    r = mqttpacket.encode_remainining_length(128)
+    assert r == b'\x80\x01'
+    r = mqttpacket.encode_remainining_length(16383)
+    assert r == b'\xff\x7f'
+
+
+def test_encode_three_byte_length():
+    """
+    A length over 16383 is encoded with three bytes.
+    """
+    r = mqttpacket.encode_remainining_length(16384)
+    assert r == b'\x80\x80\x01'
+    r = mqttpacket.encode_remainining_length(2097151)
+    assert r == b'\xff\xff\x7f'
+
+
+def test_encode_four_byte_length():
+    """
+    A length over 2097151 is encoded with four bytes.
+    """
+    r = mqttpacket.encode_remainining_length(2097152)
+    assert r == b'\x80\x80\x80\x01'
+    r = mqttpacket.encode_remainining_length(268435455)
+    assert r == b'\xff\xff\xff\x7f'

@@ -33,6 +33,28 @@ def _check_will_qos(instance, _attribute, value):
     if value != 0x00 and instance.will_topic is None:
         raise ValueError('Will QOS requires topic/message')
 
+
+def encode_remainining_length(remaining_length):
+    # type: (int) -> bytes
+    """Encode the remaining length for the packet.
+
+    :returns: Encoded remaining length
+    :rtype: bytes
+    """
+    encoding = True
+    encoded_bytes = bytearray()
+    encoded_byte = 0
+    while encoding:
+        encoded_byte = remaining_length % 128
+        remaining_length //= 128
+        if remaining_length:
+            encoded_byte |= 0x80
+        else:
+            encoding = False
+        encoded_bytes.append(encoded_byte)
+    return bytes(encoded_bytes)
+
+
 @attr.s
 class ConnectSpec(object):
     """
@@ -112,11 +134,11 @@ def connect(client_id, keepalive=60, connect_spec=None):
     :param client_id: The id of the client.
     :type client_id: unicode
 
-    :param keepalive (optional): How long to keep the network alive, default
+    :param keepalive: How long to keep the network alive, default
         60s.
     :type keepalive: int
 
-    :param connect_spec (optional): The spec for this connection or None
+    :param connect_spec: The spec for this connection or None
     :type connect_spec: mqttpacket.ConnectSpec
 
     :returns: A connect packet.

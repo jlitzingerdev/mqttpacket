@@ -8,6 +8,7 @@ from ._builders import (
     pingreq,
     SubscriptionSpec,
     subscribe,
+    encode_remainining_length,
 )
 
 from ._parsing import (
@@ -47,6 +48,7 @@ __all__ = [
     'pingreq',
     'SubscriptionSpec',
     'subscribe',
+    'encode_remainining_length',
     'ConnackPacket',
     'SubackPacket',
     'PublishPacket',
