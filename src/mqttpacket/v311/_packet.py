@@ -67,3 +67,14 @@ class PublishPacket(object):
     packetid = attr.ib()
     payload = attr.ib()
     pkt_type = attr.ib(default=MQTT_PACKET_PUBLISH)
+
+
+@attr.s(slots=True)
+class DisconnectPacket(object):
+    """
+    Packet representing a disconnect
+
+    :ivar reserved: Reserved bits from the packet.
+    """
+    reserved = attr.ib()
+    pkt_type = attr.ib(default=MQTT_PACKET_DISCONNECT)

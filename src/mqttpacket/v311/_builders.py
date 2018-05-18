@@ -250,3 +250,13 @@ def subscribe(packetid, topicspecs):
     msg = b''.join(encoded_specs)
 
     return msg
+
+
+def disconnect():
+    # type: () -> bytes
+    """Build a DISCONNECT packet."""
+    return struct.pack(
+        "!BB",
+        (_packet.MQTT_PACKET_DISCONNECT << 4),
+        0
+    )

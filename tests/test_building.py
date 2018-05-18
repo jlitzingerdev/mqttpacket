@@ -193,3 +193,10 @@ def test_encode_four_byte_length():
     assert r == b'\x80\x80\x80\x01'
     r = mqttpacket.encode_remainining_length(268435455)
     assert r == b'\xff\xff\xff\x7f'
+
+
+def test_disconnect():
+    """
+    A valid DISCONNECT packet is built.
+    """
+    assert mqttpacket.disconnect() == b'\xe0\x00'

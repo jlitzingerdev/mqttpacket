@@ -7,7 +7,7 @@ import json
 import pytest
 
 from mqttpacket.v311 import _parsing, _packet
-from mqttpacket.v311 import MQTTParseError
+from mqttpacket.v311 import MQTTParseError, disconnect
 
 def test_parse_publish_simple():
     """
@@ -208,3 +208,12 @@ def test_parse_five_byte(capture_len):
     msgs = []
     with pytest.raises(MQTTParseError):
         _parsing.parse(data, msgs)
+
+
+def test_parse_disconnect():
+    """
+    A disconnect packet is successfully parsed.
+    """
+    msgs = []
+    _parsing.parse(bytearray(disconnect()), msgs)
+    assert msgs[0].pkt_type == _packet.MQTT_PACKET_DISCONNECT

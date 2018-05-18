@@ -9,6 +9,7 @@ from ._builders import (
     SubscriptionSpec,
     subscribe,
     encode_remainining_length,
+    disconnect,
 )
 
 from ._parsing import (
@@ -49,6 +50,7 @@ __all__ = [
     'SubscriptionSpec',
     'subscribe',
     'encode_remainining_length',
+    'disconnect',
     'ConnackPacket',
     'SubackPacket',
     'PublishPacket',

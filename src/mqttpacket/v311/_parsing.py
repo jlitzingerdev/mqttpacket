@@ -6,11 +6,12 @@ A parser should either consume all packet data, or raise and error.
 
 """
 from __future__ import absolute_import
-import typing
+from typing import ByteString, List, Any, Callable, Dict
 
 from . import _packet, _errors
 
 def parse_connack(data, remaining_length, variable_begin, output):
+    # type: (bytearray, int, int, List[Any]) -> None
     """Parse a CONNACK packet.
 
     :param data: Data to parse
@@ -74,6 +75,7 @@ def parse_suback(data, remaining_length, variable_begin, output):
 
 
 def parse_publish(data, remaining_length, variable_begin, output):
+    # type: (bytearray, int, int, List[Any]) -> None
     """Parse a PUBLISH packet.
 
     :param data: Incoming data to parse.
@@ -114,9 +116,16 @@ def parse_publish(data, remaining_length, variable_begin, output):
     )
 
 
+def parse_disconnect(data, _remaining_length, _offset, output):
+    # type: (bytearray, int, int, List[Any]) -> None
+    """Parse a DISCONNECT packet and validate"""
+    p = _packet.DisconnectPacket(data[0] & 0x0f)
+    output.append(p)
+
 
 def _null_parse(data, _remaining_length, _offset, _output):
-    return len(data)
+    # type: (bytearray, int, int, List[Any]) -> None
+    """Empty parser"""
 
 
 PARSERS = {
@@ -133,20 +142,21 @@ PARSERS = {
     _packet.MQTT_PACKET_UNSUBACK: _null_parse,
     _packet.MQTT_PACKET_PINGREQ: _null_parse,
     _packet.MQTT_PACKET_PINGRESP: parse_pingresp,
-    _packet.MQTT_PACKET_DISCONNECT: _null_parse,
-}
+    _packet.MQTT_PACKET_DISCONNECT: parse_disconnect,
+} # type: Dict[int, Callable[[bytearray, int, int, List[Any]], Any]]
 
 
 _MULTIPLIERS = (1, 128, 128 * 128, 128 * 128 * 128, 0)
 _MAX_REMAINING_LENGTH = 268435455
 
 def check_total_len(data, offset, remaining_length, variable_begin):
-    # type: (typing.ByteString, int, int, int) -> bool
+    # type: (ByteString, int, int, int) -> bool
     """Verify enough data is available"""
     size_rem_len = variable_begin - offset - 1
     return (len(data) - offset) == (remaining_length + 1 + size_rem_len)
 
 def parse(data, output):
+    # type: (ByteString, List[Any]) -> int
     """Parse packets from data.
 
     :param data: Data to parse into MQTT packets
