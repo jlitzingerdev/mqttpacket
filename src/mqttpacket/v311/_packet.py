@@ -26,21 +26,28 @@ PROTOCOL_LEVEL = 4 # MQTT 3.1.1
 
 
 @attr.s
-class ConnectResponse(object):
-    """Object representing a connection response"""
-    pkt_type = attr.ib()
+class ConnackPacket(object):
+    """Parsed CONNACK packet
+
+    :ivar return_code: Return code from the connect operation.
+
+    :ivar session_present: Whether stored session state exists.
+
+    :ivar pkt_type: MQTT_PACKET_CONNACK
+    """
     return_code = attr.ib()
     session_present = attr.ib()
+    pkt_type = attr.ib(default=MQTT_PACKET_CONNACK)
 
 
 @attr.s
-class SubackResponse(object):
+class SubackPacket(object):
+    """Parsed SUBACK packet
+
     """
-    Payload for SUBACK packets.
-    """
-    pkt_type = attr.ib()
     packet_id = attr.ib()
     return_codes = attr.ib()
+    pkt_type = attr.ib(default=MQTT_PACKET_SUBACK)
 
 
 @attr.s(slots=True)
@@ -48,7 +55,12 @@ class PublishPacket(object):
     """
     Packet representing an incoming publish message.
     """
-    pkt_type = attr.ib()
+    dup = attr.ib()
+    qos = attr.ib(
+        validator=attr.validators.in_(VALID_QOS)
+    )
+    retain = attr.ib()
     topic = attr.ib()
     packetid = attr.ib()
     payload = attr.ib()
+    pkt_type = attr.ib(default=MQTT_PACKET_PUBLISH)

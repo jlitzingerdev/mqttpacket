@@ -35,8 +35,7 @@ def parse_connack(data, remaining_length, variable_begin, output):
         raise _errors.MQTTParseError("Reserved bits not clear")
 
     output.append(
-        _packet.ConnectResponse(
-            _packet.MQTT_PACKET_CONNACK,
+        _packet.ConnackPacket(
             rc,
             ack_flags
         )
@@ -67,8 +66,7 @@ def parse_suback(data, remaining_length, variable_begin, output):
     packet_id = (data[variable_begin] << 8) | data[variable_begin+1]
     variable_begin += 2
     output.append(
-        _packet.SubackResponse(
-            _packet.MQTT_PACKET_SUBACK,
+        _packet.SubackPacket(
             packet_id,
             [rc for rc in data[variable_begin:end_payload]]
         )
@@ -106,7 +104,6 @@ def parse_publish(data, remaining_length, variable_begin, output):
 
     output.append(
         _packet.PublishPacket(
-            _packet.MQTT_PACKET_PUBLISH,
             (flags & 0x08) >> 3,
             qos,
             flags & 0x1,
