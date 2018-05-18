@@ -112,7 +112,7 @@ def capture_len():
     """
     rem_len = []
 
-    def _capture(data, remaining_length, _variable_begin, _output):
+    def _capture(data, remaining_length, _variable_begin):
         rem_len.append(remaining_length)
         return len(data)
 
@@ -215,5 +215,5 @@ def test_parse_disconnect():
     A disconnect packet is successfully parsed.
     """
     msgs = []
-    _parsing.parse(bytearray(disconnect()), msgs)
+    r = _parsing.parse(bytearray(disconnect()), msgs)
     assert msgs[0].pkt_type == _packet.MQTT_PACKET_DISCONNECT

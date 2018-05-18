@@ -6,16 +6,21 @@ A parser should either consume all packet data, or raise and error.
 
 """
 from __future__ import absolute_import
-from typing import ByteString, List, Any, Callable, Dict
+from typing import (  # pylint: disable=unused-import
+    ByteString,
+    List,
+    Any,
+    Callable,
+    Dict
+)
 
 from . import _packet, _errors
 
-def parse_connack(data, remaining_length, variable_begin, output):
-    # type: (bytearray, int, int, List[Any]) -> None
-    """Parse a CONNACK packet.
+def parse_connack(data, remaining_length, variable_begin):
+    # type: (bytearray, int, int) -> _packet.ConnackPacket
+    """Parse a CONNACK packet
 
     :param data: Data to parse
-    :type data: bytebuffer
 
     :param variable_begin: Offset of start of variable length header
 
@@ -35,26 +40,26 @@ def parse_connack(data, remaining_length, variable_begin, output):
     if (ack_flags & 0xFE) != 0:
         raise _errors.MQTTParseError("Reserved bits not clear")
 
-    output.append(
-        _packet.ConnackPacket(
-            rc,
-            ack_flags
-        )
+    return _packet.ConnackPacket(
+        rc,
+        ack_flags
     )
 
 
-def parse_pingresp(data, _length, _variable_begin, _output):
+
+def parse_pingresp(_data, _length, _variable_begin):
     """
     Parse a PINGRESP, consume and discard.
     """
     return
 
 
-def parse_suback(data, remaining_length, variable_begin, output):
+def parse_suback(data, remaining_length, variable_begin):
     """
     Parse a SUBACK packet.
 
     :param data: The data to parse.
+
     :param remaining_length: Remaining length field parsed
         from the packet.
 
@@ -66,16 +71,15 @@ def parse_suback(data, remaining_length, variable_begin, output):
     end_payload = remaining_length + variable_begin
     packet_id = (data[variable_begin] << 8) | data[variable_begin+1]
     variable_begin += 2
-    output.append(
-        _packet.SubackPacket(
-            packet_id,
-            [rc for rc in data[variable_begin:end_payload]]
-        )
+    return _packet.SubackPacket(
+        packet_id,
+        [rc for rc in data[variable_begin:end_payload]]
     )
 
 
-def parse_publish(data, remaining_length, variable_begin, output):
-    # type: (bytearray, int, int, List[Any]) -> None
+
+def parse_publish(data, remaining_length, variable_begin):
+    # type: (bytearray, int, int) -> _packet.PublishPacket
     """Parse a PUBLISH packet.
 
     :param data: Incoming data to parse.
@@ -84,7 +88,6 @@ def parse_publish(data, remaining_length, variable_begin, output):
     :param variable_begin: Offset of start of variable length header
 
     :param output: List of result messages
-    :type output: [mqttpacket.v311.PublishPacket]
 
     :returns: number of bytes consumed.
 
@@ -104,27 +107,24 @@ def parse_publish(data, remaining_length, variable_begin, output):
         packetid = (data[variable_begin] << 8) | data[variable_begin+1]
         variable_begin += 2
 
-    output.append(
-        _packet.PublishPacket(
-            (flags & 0x08) >> 3,
-            qos,
-            flags & 0x1,
-            topic,
-            packetid,
-            data[variable_begin:end_packet]
-        )
+    return _packet.PublishPacket(
+        (flags & 0x08) >> 3,
+        qos,
+        flags & 0x1,
+        topic,
+        packetid,
+        data[variable_begin:end_packet]
     )
 
 
-def parse_disconnect(data, _remaining_length, _offset, output):
-    # type: (bytearray, int, int, List[Any]) -> None
+def parse_disconnect(data, _remaining_length, _offset):
+    # type: (bytearray, int, int) -> _packet.DisconnectPacket
     """Parse a DISCONNECT packet and validate"""
-    p = _packet.DisconnectPacket(data[0] & 0x0f)
-    output.append(p)
+    return _packet.DisconnectPacket(data[0] & 0x0f)
 
 
-def _null_parse(data, _remaining_length, _offset, _output):
-    # type: (bytearray, int, int, List[Any]) -> None
+def _null_parse(_data, _remaining_length, _offset):
+    # type: (bytearray, int, int) -> None
     """Empty parser"""
 
 
@@ -143,7 +143,7 @@ PARSERS = {
     _packet.MQTT_PACKET_PINGREQ: _null_parse,
     _packet.MQTT_PACKET_PINGRESP: parse_pingresp,
     _packet.MQTT_PACKET_DISCONNECT: parse_disconnect,
-} # type: Dict[int, Callable[[bytearray, int, int, List[Any]], Any]]
+} # type: Dict[int, Callable[[bytearray, int, int], Any]]
 
 
 _MULTIPLIERS = (1, 128, 128 * 128, 128 * 128 * 128, 0)
@@ -160,10 +160,8 @@ def parse(data, output):
     """Parse packets from data.
 
     :param data: Data to parse into MQTT packets
-    :type data: bytearray
 
     :param output: Output list for storing parsed packets.
-    :type output: MutableSequence
 
     :returns: number of bytes from data consumed
 
@@ -199,11 +197,10 @@ def parse(data, output):
             return consumed
 
         try:
-            PARSERS[pkt_type](
+            r = PARSERS[pkt_type](
                 data,
                 remaining_length,
                 variable_begin,
-                output
             )
         except KeyError:
             offset += 1
@@ -212,5 +209,6 @@ def parse(data, output):
         else:
             consumed += size_rem_len + 1 + remaining_length
             offset += consumed
+            output.append(r)
 
     return consumed
