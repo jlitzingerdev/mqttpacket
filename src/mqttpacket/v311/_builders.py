@@ -3,6 +3,7 @@ Copyright 2018 Jason Litzinger
 See LICENSE for details.
 """
 import struct
+from typing import Union # pylint: disable=unused-import
 
 import attr
 import six
@@ -260,3 +261,49 @@ def disconnect():
         (_packet.MQTT_PACKET_DISCONNECT << 4),
         0
     )
+
+
+def publish(topic, dup, qos, retain, payload, packet_id=None):
+    # type: (str, bool, int, bool, bytes, Union[None,int]) -> bytes
+    """Build a PUBLISH packet.
+    """
+    #remaining_len = (topiclen after encoding + 2) + (2 | 0 if packetid) + payload_len
+    if qos not in _packet.VALID_QOS:
+        raise ValueError('QoS must be 0, 1, or 2')
+
+    if not isinstance(topic, six.text_type):
+        raise ValueError('Qos must be 0, 1, or 2')
+
+    if qos > 0 and packet_id is None:
+        raise ValueError('QoS of 1 or 2 must have a packet id')
+
+    if qos == 0 and dup:
+        raise ValueError('Dup must not be set on QoS of 0')
+
+    if not isinstance(payload, bytes):
+        raise TypeError('Payload must be bytes')
+
+    remaining_len = len(payload)
+    encoded_packet_id = b''
+    if qos > 0:
+        remaining_len += _packet.PACKET_ID_LEN
+        encoded_packet_id = struct.pack('!H', packet_id)
+
+    encoded_topic = topic.encode('utf-8')
+    remaining_len += _packet.STRING_LENGTH_BYTES + len(encoded_topic)
+    print(remaining_len)
+
+    topic_len = struct.pack('!H', len(encoded_topic))
+    rl = encode_remainining_length(remaining_len)
+    byte1 = _packet.MQTT_PACKET_PUBLISH << 4
+    byte1 |= (int(dup) << 3)
+    byte1 |= qos << 1
+    byte1 |= int(retain)
+    return b''.join((
+        six.int2byte(byte1),
+        rl,
+        topic_len,
+        encoded_topic,
+        encoded_packet_id,
+        payload
+    ))

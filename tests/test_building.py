@@ -2,6 +2,9 @@
 Copyright 2018 Jason Litzinger
 See LICENSE for details.
 """
+import binascii
+import json
+
 import six
 import pytest
 
@@ -200,3 +203,130 @@ def test_disconnect():
     A valid DISCONNECT packet is built.
     """
     assert mqttpacket.disconnect() == b'\xe0\x00'
+
+
+def test_publish():
+    """
+    A valid PUBLISH packet is successfully decoded.
+    """
+    payload = {u'test': u'test'}
+    payload_str = json.dumps(payload).encode('utf-8')
+    publish = mqttpacket.publish(
+        u'test',
+        False,
+        0,
+        True,
+        payload_str
+    )
+    print(binascii.hexlify(publish))
+    assert six.indexbytes(publish, 0) == 49
+    assert six.indexbytes(publish, 1) == 22
+    expect = binascii.unhexlify(
+        b'31160004746573747b2274657374223a202274657374227d'
+    )
+    assert publish == expect
+
+
+def test_publish_nonzero_qos_requires_packetid():
+    """
+    A PUBLISH packet with a QoS of 1 or 2 requires a packet id.
+    """
+    with pytest.raises(ValueError):
+        mqttpacket.publish(
+            u'test',
+            False,
+            1,
+            True,
+            u'foo'.encode('utf-8')
+        )
+
+    with pytest.raises(ValueError):
+        mqttpacket.publish(
+            u'test',
+            False,
+            2,
+            True,
+            u'foo'.encode('utf-8')
+        )
+
+
+def test_publish_qos_1():
+    """
+    A publish with a QoS of 1 and a packet id are successfully encoded.
+    """
+    publish = mqttpacket.publish(
+        u'test',
+        False,
+        1,
+        True,
+        u'foo'.encode('utf-8'),
+        packet_id=255
+    )
+    expect = binascii.unhexlify(
+        b'330b00047465737400ff666f6f'
+    )
+    assert publish == expect
+
+
+def test_publish_qos_2():
+    """
+    A publish with a QoS of 2 and a packet id are successfully encoded.
+    """
+    publish = mqttpacket.publish(
+        u'test',
+        False,
+        2,
+        False,
+        u'foo'.encode('utf-8'),
+        packet_id=256
+    )
+    expect = binascii.unhexlify(
+        b'340b0004746573740100666f6f'
+    )
+    assert publish == expect
+
+
+def test_publish_dup():
+    """
+    A publish with dup set is successfully encoded
+    """
+    publish = mqttpacket.publish(
+        u'test',
+        True,
+        1,
+        False,
+        u'foo'.encode('utf-8'),
+        packet_id=256
+    )
+    expect = binascii.unhexlify(
+        b'3a0b0004746573740100666f6f'
+    )
+    assert publish == expect
+
+
+def test_publish_dup_requires_qos():
+    """
+    Setting dup on PUBLISH requires nonzero QoS.
+    """
+    with pytest.raises(ValueError):
+        mqttpacket.publish(
+            u'test',
+            True,
+            0,
+            False,
+            u'foo'.encode('utf-8'),
+            packet_id=256
+        )
+
+def test_publish_payload_requires_bytes():
+    """
+    PUBLISH payload must be bytes.
+    """
+    with pytest.raises(TypeError):
+        mqttpacket.publish(
+            u'test',
+            False,
+            0,
+            False,
+            u'foo'
+        )
