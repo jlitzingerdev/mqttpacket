@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Copyright 2018 Jason Litzinger
 See LICENSE for details.
@@ -156,6 +157,20 @@ def test_build_subscription_single():
     assert six.indexbytes(packet, 4) << 8 | six.indexbytes(packet, 5) == 6
     assert packet[6:12].decode('utf-8') == u'test/1'
     assert six.indexbytes(packet, 12) == 0x00
+
+
+def test_subscription_spec_multibyte():
+    """
+    A topic with multibyte characters encoded as UTF uses
+    the encoded length.
+    """
+    topic = u'super€'
+    spec = mqttpacket.SubscriptionSpec(
+        topic,
+        0
+    )
+    assert spec.remaining_len() == 11
+    assert spec.to_bytes() == b'\x00\x08\x73\x75\x70\x65\x72\xe2\x82\xac\x00'
 
 
 def test_encode_single_byte_length():

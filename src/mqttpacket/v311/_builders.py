@@ -205,17 +205,22 @@ class SubscriptionSpec(object):
         validator=_validate_qos,
     )
 
+    _encoded = attr.ib(init=False)
+
+    def __attrs_post_init__(self):
+        self._encoded = self.topicfilter.encode('utf-8')
+
     def remaining_len(self):
         """
         Length for this spec.
         """
-        return 3 + len(self.topicfilter)
+        return 3 + len(self._encoded)
 
     def to_bytes(self):
         """Encode this spec as bytes"""
         return b''.join([
-            struct.pack('!H', len(self.topicfilter)),
-            self.topicfilter.encode('utf-8'),
+            struct.pack('!H', len(self._encoded)),
+            self._encoded,
             struct.pack('!B', self.qos)
         ])
 
