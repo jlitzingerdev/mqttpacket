@@ -8,7 +8,7 @@ from typing import Union # pylint: disable=unused-import
 import attr
 import six
 
-from . import _packet
+from . import _constants
 
 _CONNECT_REMAINING_LENGTH = 10
 
@@ -89,7 +89,7 @@ class ConnectSpec(object):
     will_qos = attr.ib(
         default=0x00,
         validator=[
-            attr.validators.in_(_packet.VALID_QOS),
+            attr.validators.in_(_constants.VALID_QOS),
             _check_will_qos,
         ]
     )
@@ -158,11 +158,11 @@ def connect(client_id, keepalive=60, connect_spec=None):
 
     msg = struct.pack(
         "!BBH4sBBHH",
-        (_packet.MQTT_PACKET_CONNECT << 4),
+        (_constants.MQTT_PACKET_CONNECT << 4),
         remaining_length,
         0x0004,
         PROTOCOL_NAME,
-        _packet.PROTOCOL_LEVEL,
+        _constants.PROTOCOL_LEVEL,
         0x02,
         keepalive,
         len(client_id)
@@ -182,7 +182,7 @@ def pingreq():
     """
     return struct.pack(
         '!BB',
-        (_packet.MQTT_PACKET_PINGREQ << 4),
+        (_constants.MQTT_PACKET_PINGREQ << 4),
         0
     )
 
@@ -243,7 +243,7 @@ def subscribe(packetid, topicspecs):
     # TODO: Remaining len can be multibyte
     msg = struct.pack(
         '!BBH',
-        (_packet.MQTT_PACKET_SUBSCRIBE << 4) | 0x02,
+        (_constants.MQTT_PACKET_SUBSCRIBE << 4) | 0x02,
         remaining_len,
         packetid
     )
@@ -263,7 +263,7 @@ def disconnect():
     """Build a DISCONNECT packet."""
     return struct.pack(
         "!BB",
-        (_packet.MQTT_PACKET_DISCONNECT << 4),
+        (_constants.MQTT_PACKET_DISCONNECT << 4),
         0
     )
 
@@ -273,7 +273,7 @@ def publish(topic, dup, qos, retain, payload, packet_id=None):
     """Build a PUBLISH packet.
     """
     #remaining_len = (topiclen after encoding + 2) + (2 | 0 if packetid) + payload_len
-    if qos not in _packet.VALID_QOS:
+    if qos not in _constants.VALID_QOS:
         raise ValueError('QoS must be 0, 1, or 2')
 
     if not isinstance(topic, six.text_type):
@@ -291,16 +291,16 @@ def publish(topic, dup, qos, retain, payload, packet_id=None):
     remaining_len = len(payload)
     encoded_packet_id = b''
     if qos > 0:
-        remaining_len += _packet.PACKET_ID_LEN
+        remaining_len += _constants.PACKET_ID_LEN
         encoded_packet_id = struct.pack('!H', packet_id)
 
     encoded_topic = topic.encode('utf-8')
-    remaining_len += _packet.STRING_LENGTH_BYTES + len(encoded_topic)
+    remaining_len += _constants.STRING_LENGTH_BYTES + len(encoded_topic)
     print(remaining_len)
 
     topic_len = struct.pack('!H', len(encoded_topic))
     rl = encode_remainining_length(remaining_len)
-    byte1 = _packet.MQTT_PACKET_PUBLISH << 4
+    byte1 = _constants.MQTT_PACKET_PUBLISH << 4
     byte1 |= (int(dup) << 3)
     byte1 |= qos << 1
     byte1 |= int(retain)

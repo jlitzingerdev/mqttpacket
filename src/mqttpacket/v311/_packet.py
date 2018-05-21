@@ -4,31 +4,7 @@ See LICENSE for details
 """
 import attr
 
-
-MQTT_PACKET_INVALID = 0
-MQTT_PACKET_CONNECT = 1
-MQTT_PACKET_CONNACK = 2
-MQTT_PACKET_PUBLISH = 3
-MQTT_PACKET_PUBACK = 4
-MQTT_PACKET_PUBREC = 5
-MQTT_PACKET_PUBREL = 6
-MQTT_PACKET_PUBCOMP = 7
-MQTT_PACKET_SUBSCRIBE = 8
-MQTT_PACKET_SUBACK = 9
-MQTT_PACKET_UNSUBSCRIBE = 10
-MQTT_PACKET_UNSUBACK = 11
-MQTT_PACKET_PINGREQ = 12
-MQTT_PACKET_PINGRESP = 13
-MQTT_PACKET_DISCONNECT = 14
-MQTT_PACKET_MAX = MQTT_PACKET_DISCONNECT + 1
-
-PROTOCOL_LEVEL = 4 # MQTT 3.1.1
-
-
-VALID_QOS = (0x00, 0x01, 0x02)
-PACKET_ID_LEN = 2
-STRING_LENGTH_BYTES = 2
-
+from . import _constants
 
 @attr.s
 class ConnackPacket(object):
@@ -42,7 +18,7 @@ class ConnackPacket(object):
     """
     return_code = attr.ib()
     session_present = attr.ib()
-    pkt_type = attr.ib(default=MQTT_PACKET_CONNACK)
+    pkt_type = attr.ib(default=_constants.MQTT_PACKET_CONNACK)
 
 
 @attr.s
@@ -52,7 +28,7 @@ class SubackPacket(object):
     """
     packet_id = attr.ib()
     return_codes = attr.ib()
-    pkt_type = attr.ib(default=MQTT_PACKET_SUBACK)
+    pkt_type = attr.ib(default=_constants.MQTT_PACKET_SUBACK)
 
 
 @attr.s(slots=True)
@@ -62,13 +38,13 @@ class PublishPacket(object):
     """
     dup = attr.ib()
     qos = attr.ib(
-        validator=attr.validators.in_(VALID_QOS)
+        validator=attr.validators.in_(_constants.VALID_QOS)
     )
     retain = attr.ib()
     topic = attr.ib()
     packetid = attr.ib()
     payload = attr.ib()
-    pkt_type = attr.ib(default=MQTT_PACKET_PUBLISH)
+    pkt_type = attr.ib(default=_constants.MQTT_PACKET_PUBLISH)
 
 
 @attr.s(slots=True)
@@ -79,4 +55,15 @@ class DisconnectPacket(object):
     :ivar reserved: Reserved bits from the packet.
     """
     reserved = attr.ib()
-    pkt_type = attr.ib(default=MQTT_PACKET_DISCONNECT)
+    pkt_type = attr.ib(default=_constants.MQTT_PACKET_DISCONNECT)
+
+
+@attr.s(slots=True)
+class PubackPacket(object):
+    """
+    Class representing a PUBACK packet.
+
+    :ivar packet_id: The packet identifier being ack'd.
+    """
+    packet_id = attr.ib()
+    pkt_type = attr.ib(default=_constants.MQTT_PACKET_PUBACK)

@@ -6,7 +6,7 @@ import binascii
 import json
 import pytest
 
-from mqttpacket.v311 import _parsing, _packet
+from mqttpacket.v311 import _parsing, _packet, _constants
 from mqttpacket.v311 import MQTTParseError, disconnect
 
 def test_parse_publish_simple():
@@ -26,7 +26,7 @@ def test_parse_publish_simple():
     assert res == {"test": "test"}
     assert msgs[0].packetid is None
     assert msgs[0].topic == u'test'
-    assert msgs[0].pkt_type == _packet.MQTT_PACKET_PUBLISH
+    assert msgs[0].pkt_type == _constants.MQTT_PACKET_PUBLISH
     assert msgs[0].qos == 0
     assert not msgs[0].dup
     assert msgs[0].retain
@@ -49,7 +49,7 @@ def test_parse_publish_qos():
     assert res == {"test": "test"}
     assert msgs[0].packetid == 3
     assert msgs[0].topic == u'test'
-    assert msgs[0].pkt_type == _packet.MQTT_PACKET_PUBLISH
+    assert msgs[0].pkt_type == _constants.MQTT_PACKET_PUBLISH
     assert msgs[0].qos == 1
     assert not msgs[0].dup
     assert not msgs[0].retain
@@ -85,7 +85,7 @@ def test_parse_suback():
     assert len(msgs) == 1
     assert msgs[0].packet_id == 1
     assert msgs[0].return_codes == [0]
-    assert msgs[0].pkt_type == _packet.MQTT_PACKET_SUBACK
+    assert msgs[0].pkt_type == _constants.MQTT_PACKET_SUBACK
 
 
 def test_parse_connack():
@@ -101,7 +101,7 @@ def test_parse_connack():
     assert len(data) == c
     assert msgs[0].return_code == 0
     assert msgs[0].session_present == 0
-    assert msgs[0].pkt_type == _packet.MQTT_PACKET_CONNACK
+    assert msgs[0].pkt_type == _constants.MQTT_PACKET_CONNACK
 
 
 @pytest.fixture(scope='function')
@@ -116,14 +116,14 @@ def capture_len():
         rem_len.append(remaining_length)
         return len(data)
 
-    old = _parsing.PARSERS[_packet.MQTT_PACKET_PUBLISH]
+    old = _parsing.PARSERS[_constants.MQTT_PACKET_PUBLISH]
     old_check = _parsing.check_total_len
-    _parsing.PARSERS[_packet.MQTT_PACKET_PUBLISH] = _capture
+    _parsing.PARSERS[_constants.MQTT_PACKET_PUBLISH] = _capture
     def _fake_check(_w, _x, _y, _z):
         return True
     _parsing.check_total_len = _fake_check
     yield rem_len
-    _parsing.PARSERS[_packet.MQTT_PACKET_PUBLISH] = old
+    _parsing.PARSERS[_constants.MQTT_PACKET_PUBLISH] = old
     _parsing.check_total_len = old_check
 
 
@@ -216,4 +216,4 @@ def test_parse_disconnect():
     """
     msgs = []
     r = _parsing.parse(bytearray(disconnect()), msgs)
-    assert msgs[0].pkt_type == _packet.MQTT_PACKET_DISCONNECT
+    assert msgs[0].pkt_type == _constants.MQTT_PACKET_DISCONNECT

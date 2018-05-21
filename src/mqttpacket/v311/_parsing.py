@@ -14,7 +14,7 @@ from typing import (  # pylint: disable=unused-import
     Dict
 )
 
-from . import _packet, _errors
+from . import _packet, _errors, _constants
 
 def parse_connack(data, remaining_length, variable_begin):
     # type: (bytearray, int, int) -> _packet.ConnackPacket
@@ -123,26 +123,36 @@ def parse_disconnect(data, _remaining_length, _offset):
     return _packet.DisconnectPacket(data[0] & 0x0f)
 
 
+def parse_puback(data, remaining_length, offset):
+    if remaining_length != 2:
+        raise _errors.MQTTInvalidPacketError(
+            'Remaining length should be 2 for PUBACK'
+        )
+    return _constants.PubackPacket(
+        (data[offset] << 8) | data[offset+1]
+    )
+
+
 def _null_parse(_data, _remaining_length, _offset):
     # type: (bytearray, int, int) -> None
     """Empty parser"""
 
 
 PARSERS = {
-    _packet.MQTT_PACKET_CONNECT: _null_parse,
-    _packet.MQTT_PACKET_CONNACK: parse_connack,
-    _packet.MQTT_PACKET_PUBLISH: parse_publish,
-    _packet.MQTT_PACKET_PUBACK: _null_parse,
-    _packet.MQTT_PACKET_PUBREC: _null_parse,
-    _packet.MQTT_PACKET_PUBREL: _null_parse,
-    _packet.MQTT_PACKET_PUBCOMP: _null_parse,
-    _packet.MQTT_PACKET_SUBSCRIBE: _null_parse,
-    _packet.MQTT_PACKET_SUBACK: parse_suback,
-    _packet.MQTT_PACKET_UNSUBSCRIBE: _null_parse,
-    _packet.MQTT_PACKET_UNSUBACK: _null_parse,
-    _packet.MQTT_PACKET_PINGREQ: _null_parse,
-    _packet.MQTT_PACKET_PINGRESP: parse_pingresp,
-    _packet.MQTT_PACKET_DISCONNECT: parse_disconnect,
+    _constants.MQTT_PACKET_CONNECT: _null_parse,
+    _constants.MQTT_PACKET_CONNACK: parse_connack,
+    _constants.MQTT_PACKET_PUBLISH: parse_publish,
+    _constants.MQTT_PACKET_PUBACK: _null_parse,
+    _constants.MQTT_PACKET_PUBREC: _null_parse,
+    _constants.MQTT_PACKET_PUBREL: _null_parse,
+    _constants.MQTT_PACKET_PUBCOMP: _null_parse,
+    _constants.MQTT_PACKET_SUBSCRIBE: _null_parse,
+    _constants.MQTT_PACKET_SUBACK: parse_suback,
+    _constants.MQTT_PACKET_UNSUBSCRIBE: _null_parse,
+    _constants.MQTT_PACKET_UNSUBACK: _null_parse,
+    _constants.MQTT_PACKET_PINGREQ: _null_parse,
+    _constants.MQTT_PACKET_PINGRESP: parse_pingresp,
+    _constants.MQTT_PACKET_DISCONNECT: parse_disconnect,
 } # type: Dict[int, Callable[[bytearray, int, int], Any]]
 
 

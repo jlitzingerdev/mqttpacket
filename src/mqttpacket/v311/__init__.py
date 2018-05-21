@@ -22,6 +22,10 @@ from ._packet import (
     ConnackPacket,
     SubackPacket,
     PublishPacket,
+    PubackPacket,
+)
+
+from ._constants import (
     MQTT_PACKET_CONNECT,
     MQTT_PACKET_CONNACK,
     MQTT_PACKET_PUBLISH,
@@ -56,6 +60,7 @@ __all__ = [
     'ConnackPacket',
     'SubackPacket',
     'PublishPacket',
+    'PubackPacket',
     'parse',
     'parse_connack',
     'MQTTParseError',
