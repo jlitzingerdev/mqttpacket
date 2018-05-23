@@ -345,3 +345,8 @@ def test_publish_payload_requires_bytes():
             False,
             u'foo'
         )
+
+def test_pingreq():
+    """A PINGREQ is properly encoded."""
+    ping = mqttpacket.pingreq()
+    assert ping == b'\xc0\x00'

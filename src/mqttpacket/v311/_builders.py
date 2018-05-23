@@ -189,11 +189,7 @@ def pingreq():
     """
     Create a PINGREQ packet.
     """
-    return struct.pack(
-        '!BB',
-        (_constants.MQTT_PACKET_PINGREQ << 4),
-        0
-    )
+    return b'\xc0\x00'
 
 
 def _validate_qos(_instance, _attribute, value):
