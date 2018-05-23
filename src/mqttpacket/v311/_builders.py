@@ -246,26 +246,22 @@ def subscribe(packetid, topicspecs):
     if not 0 < packetid < 65535:
         raise ValueError('Packetid must be 0 < packetid < 65535')
 
-    remaining_len = 2
+    remaining_len = 2 # packetid
     for spec in topicspecs:
         remaining_len += spec.remaining_len()
 
-    # TODO: Remaining len can be multibyte
-    msg = struct.pack(
-        '!BBH',
+    msg = six.int2byte(
         (_constants.MQTT_PACKET_SUBSCRIBE << 4) | 0x02,
-        remaining_len,
-        packetid
     )
 
     encoded_specs = [msg]
+    encoded_specs.append(encode_remainining_length(remaining_len))
+    encoded_specs.append(struct.pack('!H', packetid))
     encoded_specs.extend(
         [s.to_bytes() for s in topicspecs]
     )
 
-    msg = b''.join(encoded_specs)
-
-    return msg
+    return b''.join(encoded_specs)
 
 
 def disconnect():
