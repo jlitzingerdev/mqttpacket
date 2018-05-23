@@ -156,18 +156,14 @@ def connect(client_id, keepalive=60, connect_spec=None):
     :rtype: bytes
 
     """
-    client_id = client_id.encode('utf-8')
-    # TODO: Remaining len can be multibyte
-    remaining_length = _CONNECT_REMAINING_LENGTH
 
-    if client_id:
-        remaining_length += len(client_id) + 2
+    remaining_length = _CONNECT_REMAINING_LENGTH
 
     if connect_spec is not None:
         remaining_length += connect_spec.remaining_length()
 
     msg = struct.pack(
-        "!BBH4sBBHH",
+        "!BBH4sBBH",
         (_constants.MQTT_PACKET_CONNECT << 4),
         remaining_length,
         0x0004,
@@ -175,15 +171,18 @@ def connect(client_id, keepalive=60, connect_spec=None):
         _constants.PROTOCOL_LEVEL,
         0x02,
         keepalive,
-        len(client_id)
     )
 
-    parts = [msg, client_id]
+    parts = [msg]
+    if client_id:
+        client_id = encode_string(client_id)
+        parts.append(client_id)
+        remaining_length += len(client_id)
+
     if connect_spec is not None:
         parts.append(connect_spec.payload())
 
-    msg = b''.join(parts)
-    return msg
+    return b''.join(parts)
 
 
 def pingreq():
