@@ -56,6 +56,16 @@ def encode_remainining_length(remaining_length):
     return bytes(encoded_bytes)
 
 
+def encode_string(text):
+    """Encode a string as per MQTT spec: two byte length, UTF-8 data"""
+    if not isinstance(text, six.text_type):
+        raise TypeError('text must be unicode')
+
+    encoded_text = text.encode('utf-8')
+    text_len = struct.pack('!H', len(encoded_text))
+    return b''.join([text_len, encoded_text])
+
+
 @attr.s
 class ConnectSpec(object):
     """
@@ -294,11 +304,9 @@ def publish(topic, dup, qos, retain, payload, packet_id=None):
         remaining_len += _constants.PACKET_ID_LEN
         encoded_packet_id = struct.pack('!H', packet_id)
 
-    encoded_topic = topic.encode('utf-8')
-    remaining_len += _constants.STRING_LENGTH_BYTES + len(encoded_topic)
-    print(remaining_len)
+    encoded_topic = encode_string(topic)
+    remaining_len += len(encoded_topic)
 
-    topic_len = struct.pack('!H', len(encoded_topic))
     rl = encode_remainining_length(remaining_len)
     byte1 = _constants.MQTT_PACKET_PUBLISH << 4
     byte1 |= (int(dup) << 3)
@@ -307,7 +315,6 @@ def publish(topic, dup, qos, retain, payload, packet_id=None):
     return b''.join((
         six.int2byte(byte1),
         rl,
-        topic_len,
         encoded_topic,
         encoded_packet_id,
         payload
