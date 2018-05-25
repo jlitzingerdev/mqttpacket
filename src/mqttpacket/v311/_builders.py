@@ -310,3 +310,22 @@ def publish(topic, dup, qos, retain, payload, packet_id=None):
         encoded_packet_id,
         payload
     ))
+
+
+def unsubscribe(packet_id, topics):
+    # (int, List[str]) -> bytes
+    """Build an UNSUBSCRIBE message for the specified topics."""
+    if not topics:
+        raise ValueError('At least one topic must be specified')
+
+    remaining_len = 2
+    encoded_packet_id = struct.pack('!H', packet_id)
+    encoded_topics = [encode_string(t) for t in topics]
+    for et in encoded_topics:
+        remaining_len += len(et)
+
+    parts = [six.int2byte((_constants.MQTT_PACKET_UNSUBSCRIBE << 4) | 0x1)]
+    parts.append(encode_remainining_length(remaining_len))
+    parts.append(encoded_packet_id)
+    parts.extend(encoded_topics)
+    return b''.join(parts)

@@ -11,6 +11,7 @@ from ._builders import (
     encode_remainining_length,
     disconnect,
     publish,
+    unsubscribe,
 )
 
 from ._parsing import (
@@ -57,6 +58,7 @@ __all__ = [
     'encode_remainining_length',
     'disconnect',
     'publish',
+    'unsubscribe',
     'ConnackPacket',
     'SubackPacket',
     'PublishPacket',

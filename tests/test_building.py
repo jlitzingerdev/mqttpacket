@@ -350,3 +350,25 @@ def test_pingreq():
     """A PINGREQ is properly encoded."""
     ping = mqttpacket.pingreq()
     assert ping == b'\xc0\x00'
+
+
+def test_unsubscribe():
+    """
+    An unsubscribe of two topics is successfully built.
+    """
+    msg = mqttpacket.unsubscribe(257, [u'a/b', u'c/d'])
+    assert msg[:1] == b'\xa1'
+    assert six.indexbytes(msg, 1) == 12
+    assert msg[2:4] == b'\x01\x01'
+    assert msg[4:6] == b'\x00\x03'
+    assert msg[6:9] == u'a/b'.encode('utf-8')
+    assert msg[9:11] == b'\x00\x03'
+    assert msg[11:] == u'c/d'.encode('utf-8')
+
+
+def test_unsubscribe_requires_one():
+    """
+    At least one topic must be provided to unsubscribe.
+    """
+    with pytest.raises(ValueError):
+        mqttpacket.unsubscribe(123, [])
