@@ -16,12 +16,16 @@ def test_connect_basic():
     """
     A connect packet with only a client id is properly constructed.
     """
-    packet = mqttpacket.connect(u'Foobar')
+    expect = binascii.unhexlify(
+        b'101000044d5154540402003c000474657374'
+    )
+    packet = mqttpacket.connect(u'test')
+    assert packet == expect
     assert isinstance(packet, bytes)
-    assert len(packet) == 20
+    assert len(packet) == 18
     assert six.indexbytes(packet, 0) == 16
     assert six.indexbytes(packet, 9) == 0x02
-    assert packet[14:].decode('utf-8') == u'Foobar'
+    assert packet[14:].decode('utf-8') == u'test'
 
 
 def test_will_requirements():
@@ -54,7 +58,7 @@ def test_valid_will():
     assert cs.will_topic == wt
     assert cs.will_message == wm
     assert cs.flags() == 0x0e
-    assert cs.remaining_length() == (4 + len(wt) + len(wm))
+    assert len(cs.payload()) == 32
 
     cs = mqttpacket.ConnectSpec(
         will_topic=u'wt2',
@@ -73,7 +77,7 @@ def test_default_spec():
     a clean session.
     """
     cs = mqttpacket.ConnectSpec()
-    assert cs.remaining_length() == 0
+    assert not cs.payload()
     assert cs.flags() == 0x02
 
 
@@ -115,6 +119,23 @@ def test_will_qos_values():
         will_message=u'my_will_message',
         will_qos=2
     )
+
+
+def test_connect_with_spec():
+    """
+    A valid connect spec is properly encoded.
+    """
+    cs = mqttpacket.ConnectSpec(
+        will_topic=u'my_will_topic',
+        will_message=u'my_will_message',
+        will_qos=1,
+    )
+    packet = mqttpacket.connect(u'test', connect_spec=cs)
+    assert isinstance(packet, bytes)
+    assert len(packet) == 50
+    assert six.indexbytes(packet, 0) == 16
+    assert six.indexbytes(packet, 9) == 0x0e
+    assert packet[14:18].decode('utf-8') == u'test'
 
 
 def test_build_subscription_multiple():

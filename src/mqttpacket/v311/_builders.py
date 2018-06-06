@@ -120,23 +120,20 @@ class ConnectSpec(object):
 
         return flags
 
-    def remaining_length(self):
-        """Return the length of the connect options."""
-        rem_len = 0
+    def payload(self):
+        """Return the encoded connect options."""
+        parts = []
         if self.username:
-            rem_len += 2
-            rem_len += len(self.username)
+            parts.append(encode_string(self.username))
 
         if self.password:
-            rem_len += 2
-            rem_len += len(self.password)
+            parts.append(encode_string(self.password))
 
         if self.will_topic:
-            rem_len += 4
-            rem_len += len(self.will_topic)
-            rem_len += len(self.will_message)
+            parts.append(encode_string(self.will_topic))
+            parts.append(encode_string(self.will_message))
 
-        return rem_len
+        return b''.join(parts)
 
 
 def connect(client_id, keepalive=60, connect_spec=None):
@@ -157,30 +154,46 @@ def connect(client_id, keepalive=60, connect_spec=None):
 
     """
 
-    remaining_length = _CONNECT_REMAINING_LENGTH
+    remaining_length = 0
 
-    if connect_spec is not None:
-        remaining_length += connect_spec.remaining_length()
-
-    msg = struct.pack(
-        "!BBH4sBBH",
+    msg = six.int2byte(
         (_constants.MQTT_PACKET_CONNECT << 4),
-        remaining_length,
-        0x0004,
-        PROTOCOL_NAME,
-        _constants.PROTOCOL_LEVEL,
-        0x02,
-        keepalive,
     )
 
     parts = [msg]
-    if client_id:
-        client_id = encode_string(client_id)
-        parts.append(client_id)
-        remaining_length += len(client_id)
 
+    encoded_conn_spec = b''
     if connect_spec is not None:
-        parts.append(connect_spec.payload())
+        encoded_conn_spec = connect_spec.payload()
+        meta = struct.pack(
+            "!H4sBBH",
+            0x0004,
+            PROTOCOL_NAME,
+            _constants.PROTOCOL_LEVEL,
+            connect_spec.flags(),
+            keepalive,
+        )
+        remaining_length += len(encoded_conn_spec)
+    else:
+        meta = struct.pack(
+            "!H4sBBH",
+            0x0004,
+            PROTOCOL_NAME,
+            _constants.PROTOCOL_LEVEL,
+            0x02,
+            keepalive,
+        )
+
+    remaining_length += len(meta)
+    encoded_client_id = b''
+    if client_id:
+        encoded_client_id = encode_string(client_id)
+        remaining_length += len(encoded_client_id)
+
+    parts.append(encode_remainining_length(remaining_length))
+    parts.append(meta)
+    parts.append(encoded_client_id)
+    parts.append(encoded_conn_spec)
 
     return b''.join(parts)
 
