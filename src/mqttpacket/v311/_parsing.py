@@ -46,12 +46,13 @@ def parse_connack(data, remaining_length, variable_begin):
     )
 
 
+_PINGRESP = _packet.PingrespPacket()
 
 def parse_pingresp(_data, _length, _variable_begin):
     """
     Parse a PINGRESP, consume and discard.
     """
-    return
+    return _PINGRESP
 
 
 def parse_suback(data, remaining_length, variable_begin):

@@ -217,3 +217,12 @@ def test_parse_disconnect():
     msgs = []
     r = _parsing.parse(bytearray(disconnect()), msgs)
     assert msgs[0].pkt_type == _constants.MQTT_PACKET_DISCONNECT
+
+
+def test_parse_pingresp():
+    """
+    A ping response returns an appropriate packet.
+    """
+    msgs = []
+    r = _parsing.parse(bytearray(b'\xd0\x00'), msgs)
+    assert msgs[0].pkt_type == _constants.MQTT_PACKET_PINGRESP

@@ -67,3 +67,12 @@ class PubackPacket(object):
     """
     packet_id = attr.ib()
     pkt_type = attr.ib(default=_constants.MQTT_PACKET_PUBACK)
+
+
+@attr.s(slots=True)
+class PingrespPacket(object):
+    """
+    Class representing a PINGRESP packet.  In
+    generally this can be created once and reused.
+    """
+    pkt_type = attr.ib(default=_constants.MQTT_PACKET_PINGRESP)
