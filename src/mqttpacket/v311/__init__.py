@@ -46,6 +46,7 @@ from ._constants import (
 from ._errors import (
     MQTTParseError,
     MQTTMoreDataNeededError,
+    MQTTInvalidPacketError,
 )
 
 
@@ -67,6 +68,7 @@ __all__ = [
     'parse_connack',
     'MQTTParseError',
     'MQTTMoreDataNeededError',
+    'MQTTInvalidPacketError',
     'MQTT_PACKET_CONNECT',
     'MQTT_PACKET_CONNACK',
     'MQTT_PACKET_PUBLISH',
