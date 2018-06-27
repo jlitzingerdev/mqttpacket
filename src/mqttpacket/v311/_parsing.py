@@ -125,11 +125,12 @@ def parse_disconnect(data, _remaining_length, _offset):
 
 
 def parse_puback(data, remaining_length, offset):
+    """Parse a puback from a payload."""
     if remaining_length != 2:
         raise _errors.MQTTInvalidPacketError(
             'Remaining length should be 2 for PUBACK'
         )
-    return _constants.PubackPacket(
+    return _packet.PubackPacket(
         (data[offset] << 8) | data[offset+1]
     )
 
@@ -143,7 +144,7 @@ PARSERS = {
     _constants.MQTT_PACKET_CONNECT: _null_parse,
     _constants.MQTT_PACKET_CONNACK: parse_connack,
     _constants.MQTT_PACKET_PUBLISH: parse_publish,
-    _constants.MQTT_PACKET_PUBACK: _null_parse,
+    _constants.MQTT_PACKET_PUBACK: parse_puback,
     _constants.MQTT_PACKET_PUBREC: _null_parse,
     _constants.MQTT_PACKET_PUBREL: _null_parse,
     _constants.MQTT_PACKET_PUBCOMP: _null_parse,

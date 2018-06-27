@@ -6,8 +6,12 @@ import binascii
 import json
 import pytest
 
-from mqttpacket.v311 import _parsing, _packet, _constants
-from mqttpacket.v311 import MQTTParseError, disconnect
+from mqttpacket.v311 import _parsing, _constants
+from mqttpacket.v311 import (
+    MQTTParseError,
+    disconnect,
+    MQTTInvalidPacketError,
+)
 
 def test_parse_publish_simple():
     """
@@ -226,3 +230,29 @@ def test_parse_pingresp():
     msgs = []
     r = _parsing.parse(bytearray(b'\xd0\x00'), msgs)
     assert msgs[0].pkt_type == _constants.MQTT_PACKET_PINGRESP
+
+
+def test_parse_puback():
+    """
+    A valid puback is successfully parsed.
+    """
+    data = bytearray()
+    data.extend(
+        binascii.unhexlify(b'40023039')
+    )
+    msgs = []
+    r = _parsing.parse(data, msgs)
+    assert msgs[0].pkt_type == _constants.MQTT_PACKET_PUBACK
+    assert msgs[0].packet_id == 12345
+
+def test_parse_puback_invalid():
+    """
+    A invalid puback raises an error.
+    """
+    data = bytearray()
+    data.extend(
+        binascii.unhexlify(b'400130')
+    )
+    msgs = []
+    with pytest.raises(MQTTInvalidPacketError):
+        _parsing.parse(data, msgs)
